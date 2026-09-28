@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>หลังร้าน: เพิ่มสต็อกไอดี</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#0d1a27;--card:#0a0a0a;--edge:#3a4a55;--ink:#f4f6f7;--mute:#9aabb4;--acc:#f2a900;--acc-ink:#241a00;--ok:#4fb3a0;--bad:#ff7a86}
+@media (prefers-color-scheme:light){:root{--bg:#e6ecf1;--card:#fff;--edge:#c3ccd2;--ink:#14232a;--mute:#5a6b73;--acc:#d98f00;--acc-ink:#fff;--ok:#1f7a68;--bad:#b3202f}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Prompt",system-ui,sans-serif;line-height:1.5;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:1.3rem;margin:8px 0 16px}
+h2{font-size:1.05rem;margin:0 0 8px}
+.card{background:var(--card);border:1px solid var(--edge);border-radius:16px;padding:16px;margin-bottom:16px}
+label{display:block;margin:10px 0 4px;font-weight:500}
+input,select,textarea{width:100%;font:inherit;padding:12px;border-radius:10px;border:1px solid var(--edge);background:var(--bg);color:var(--ink)}
+textarea{min-height:220px;resize:vertical;font-family:ui-monospace,Menlo,monospace;font-size:.85rem;white-space:pre}
+button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:12px 18px;min-height:48px;background:var(--acc);color:var(--acc-ink);cursor:pointer}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--edge)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.note{font-size:.85rem;color:var(--mute)}
+.msg{min-height:1.5em;margin:8px 0 0;font-weight:500}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+.row{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--edge)}
+.row:first-child{border-top:0}
+.top{display:flex;justify-content:space-between;align-items:center}
+button.sm{min-height:40px;padding:6px 12px}
+.acts{display:flex;gap:6px;flex-shrink:0}
+.tag{color:var(--mute);font-size:.8rem}
+.grow{flex:1;min-width:0;word-break:break-word}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+<div class="top"><h1>หลังร้าน: เพิ่มสต็อกไอดี</h1><button class="ghost" id="out" hidden>ออกจากระบบ</button></div>
+
+<section class="card" id="login" hidden>
+  <h2>เข้าสู่ระบบแอดมิน</h2>
+  <label for="em">อีเมล</label><input id="em" type="text" inputmode="email" autocomplete="username">
+  <label for="pw">รหัสผ่าน</label><input id="pw" type="password" autocomplete="current-password">
+  <p class="msg" id="lm"></p>
+  <button id="go">เข้าสู่ระบบ</button>
+</section>
+
+<div id="panel" hidden>
+  <section class="card">
+    <h2>สินค้า</h2>
+    <label for="pt">ชื่อสินค้า</label><input id="pt" type="text" maxlength="100">
+    <label for="pp">ราคา (บาท)</label><input id="pp" type="text" inputmode="numeric">
+    <label for="ps">ลำดับแสดงในหน้าร้าน (เลขน้อยขึ้นก่อน ไม่ใส่ก็ได้)</label><input id="ps" type="text" inputmode="numeric">
+    <p class="msg" id="pm"></p>
+    <button id="psave">เพิ่มสินค้า</button>
+    <button class="ghost" id="pcancel" hidden>ยกเลิกแก้ไข</button>
+    <div id="plist" style="margin-top:12px"></div>
+  </section>
+
+  <section class="card">
+    <h2>เพิ่มสต็อก</h2>
+    <label for="prod">สินค้า</label><select id="prod"></select>
+    <label for="ids">วางไอดี บรรทัดละ 1 ไอดี (ครั้งละไม่เกิน 100)</label>
+    <textarea id="ids" spellcheck="false" placeholder="อีเมล | รหัสผ่านอีเมล | รหัสเกม&#10;อีเมล | รหัสผ่านอีเมล | รหัสเกม"></textarea>
+    <p class="note" id="cnt">ยังไม่ได้วางไอดี</p>
+    <p class="note">ใช้รูปแบบเดียวกันทุกบรรทัด ข้อความในบรรทัดคือสิ่งที่ลูกค้าจะเห็นตอนรับไอดี ไอดีที่ซ้ำกับในสต็อกจะถูกข้ามให้เอง</p>
+    <p class="msg" id="am"></p>
+    <button id="add" disabled>เพิ่มสต็อก</button>
+  </section>
+
+  <section class="card">
+    <h2>เติมเครดิตให้ลูกค้า</h2>
+    <label for="tem">อีเมลที่ลูกค้าสมัคร</label><input id="tem" type="text" inputmode="email">
+    <label for="tmt">ช่องทางที่ลูกค้าโอน</label>
+    <select id="tmt"><option value="promptpay">พร้อมเพย์</option><option value="truemoney">ทรูมันนี่วอลเล็ต</option><option value="gift">ซองทรูมันนี่</option></select>
+    <label for="tref">เลขอ้างอิงในสลิป หรือรหัสซอง (กันเติมซ้ำ)</label><input id="tref" type="text">
+    <label for="tam">ยอดเงิน (บาท = เครดิต)</label><input id="tam" type="text" inputmode="numeric">
+    <p class="msg" id="tm"></p>
+    <button id="tu">เติมเครดิต</button>
+  </section>
+
+  <section class="card">
+    <h2>สต็อกคงเหลือ</h2>
+    <div id="stock"></div>
+  </section>
+</div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+// ===== ตั้งค่า: ใส่ค่าจาก Supabase > Project Settings > API =====
+// ใช้เฉพาะ URL และคีย์ anon (public) เท่านั้น ห้ามใส่ service_role
+const SUPABASE_URL = 'https://rnrdnkhrrjifbnbrqtdn.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJucmRua2hycmppZmJuYnJxdGRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1ODU2NzcsImV4cCI6MjEwNjE2MTY3N30.eINrxTvKV60ss7GoRjwCrQ6yY29Vb4OrFWn8pJC7Cr0';
+const MAX = 100;
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const $ = id => document.getElementById(id);
+const say = (id, t, ok) => { const e = $(id); e.textContent = t; e.className = 'msg ' + (t ? (ok ? 'ok' : 'bad') : ''); };
+const ERR = {
+  not_admin: 'บัญชีนี้ไม่มีสิทธิ์แอดมิน',
+  product_not_found: 'ไม่พบสินค้านี้',
+  empty: 'ยังไม่ได้วางไอดี',
+  too_many: 'วางได้ครั้งละไม่เกิน ' + MAX + ' ไอดี'
+};
+
+let prods = [], editId = null;
+const PERR = {
+  not_admin: 'บัญชีนี้ไม่มีสิทธิ์แอดมิน',
+  bad_title: 'ใส่ชื่อสินค้า (ไม่เกิน 100 ตัวอักษร)',
+  bad_price: 'ราคาต้องเป็นตัวเลข 1 ถึง 100000',
+  product_not_found: 'ไม่พบสินค้านี้'
+};
+
+function resetProdForm() {
+  editId = null;
+  $('pt').value = ''; $('pp').value = ''; $('ps').value = '';
+  $('psave').textContent = 'เพิ่มสินค้า';
+  $('pcancel').hidden = true;
+}
+
+function renderProds() {
+  const box = $('plist'); box.innerHTML = '';
+  if (!prods.length) { const e = document.createElement('p'); e.className = 'note'; e.textContent = 'ยังไม่มีสินค้า เพิ่มด้านบนได้เลย'; box.appendChild(e); return; }
+  prods.forEach(x => {
+    const r = document.createElement('div'); r.className = 'row';
+    const t = document.createElement('span'); t.className = 'grow';
+    t.textContent = x.title + ' · ' + x.price + ' บาท';
+    if (!x.active) { const g = document.createElement('span'); g.className = 'tag'; g.textContent = ' (ปิดขาย)'; t.appendChild(g); }
+    const acts = document.createElement('span'); acts.className = 'acts';
+    const eb = document.createElement('button'); eb.className = 'ghost sm'; eb.textContent = 'แก้ไข';
+    eb.onclick = () => {
+      editId = x.id; $('pt').value = x.title; $('pp').value = x.price; $('ps').value = x.sort;
+      $('psave').textContent = 'บันทึกการแก้ไข'; $('pcancel').hidden = false;
+      say('pm', '', true); $('pt').focus();
+    };
+    const tb = document.createElement('button'); tb.className = 'ghost sm'; tb.textContent = x.active ? 'ปิดขาย' : 'เปิดขาย';
+    tb.onclick = () => saveProd(x.id, x.title, x.price, x.sort, !x.active, true);
+    acts.append(eb, tb); r.append(t, acts); box.appendChild(r);
+  });
+}
+
+async function saveProd(id, title, price, sort, active, confirmToggle) {
+  if (confirmToggle && !confirm((active ? 'เปิดขาย' : 'ปิดขาย') + ' "' + title + '" ใช่ไหม')) return;
+  $('psave').disabled = true;
+  say('pm', 'กำลังบันทึก...', true);
+  const { error } = await sb.rpc('admin_save_product', { p_id: id, p_title: title, p_price: price, p_sort: sort, p_active: active });
+  $('psave').disabled = false;
+  if (error) {
+    const key = Object.keys(PERR).find(k => (error.message || '').includes(k));
+    say('pm', key ? PERR[key] : 'บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง', false);
+    return;
+  }
+  say('pm', id === null ? 'เพิ่มสินค้าแล้ว' : 'บันทึกแล้ว', true);
+  resetProdForm();
+  loadStock();
+}
+
+$('psave').onclick = () => {
+  const title = $('pt').value.trim(), price = parseInt($('pp').value, 10);
+  const sortRaw = $('ps').value.trim();
+  if (!title || !(price > 0)) { say('pm', 'กรอกชื่อสินค้าและราคาให้ครบ', false); return; }
+  let sort = sortRaw === '' ? null : parseInt(sortRaw, 10);
+  if (sortRaw !== '' && Number.isNaN(sort)) { say('pm', 'ลำดับต้องเป็นตัวเลข', false); return; }
+  if (editId === null && sort === null) sort = prods.reduce((m, x) => Math.max(m, x.sort), 0) + 1;
+  const cur = prods.find(x => x.id === editId);
+  saveProd(editId, title, price, sort, cur ? cur.active : true, false);
+};
+$('pcancel').onclick = () => { resetProdForm(); say('pm', '', true); };
+
+function view(name) {
+  $('login').hidden = name !== 'login';
+  $('panel').hidden = name !== 'panel';
+  $('out').hidden = name !== 'panel';
+}
+
+function parse() {
+  const lines = $('ids').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  const unique = [...new Set(lines)];
+  return { unique, dup: lines.length - unique.length };
+}
+
+function refreshCount() {
+  const { unique, dup } = parse();
+  const n = unique.length;
+  let t = n ? 'พบ ' + n + ' ไอดี' : 'ยังไม่ได้วางไอดี';
+  if (dup) t += ' (ซ้ำกันในช่อง ' + dup + ' บรรทัด ตัดออกให้แล้ว)';
+  if (n > MAX) t += ' เกินจำนวนที่วางได้ครั้งละ ' + MAX + ' ไอดี';
+  $('cnt').textContent = t;
+  $('add').disabled = n < 1 || n > MAX;
+}
+
+async function loadStock() {
+  const [p, s] = await Promise.all([
+    sb.from('products').select('id,title,price,sort,active').order('sort'),
+    sb.from('product_stock').select('product_id,stock')
+  ]);
+  if (p.error || s.error) { say('am', 'โหลดสต็อกไม่สำเร็จ ลองรีเฟรชหน้า', false); return; }
+  const map = Object.fromEntries(s.data.map(r => [r.product_id, r.stock]));
+  prods = p.data;
+  const cur = $('prod').value;
+  $('prod').innerHTML = '';
+  $('stock').innerHTML = '';
+  p.data.forEach(x => {
+    const o = document.createElement('option');
+    o.value = x.id; o.textContent = x.title + ' (' + x.price + ' บาท)' + (x.active ? '' : ' [ปิดขาย]');
+    $('prod').appendChild(o);
+    const r = document.createElement('div'); r.className = 'row';
+    const a = document.createElement('span'); a.textContent = x.title + (x.active ? '' : ' (ปิดขาย)');
+    const b = document.createElement('b'); b.textContent = (map[x.id] ?? 0) + ' ชิ้น';
+    r.append(a, b); $('stock').appendChild(r);
+  });
+  if (cur) $('prod').value = cur;
+  renderProds();
+}
+
+async function enter() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) { view('login'); return; }
+  const { data, error } = await sb.from('profiles').select('is_admin').eq('id', user.id).single();
+  if (error || !data || !data.is_admin) {
+    await sb.auth.signOut();
+    view('login');
+    say('lm', 'บัญชีนี้ไม่มีสิทธิ์แอดมิน', false);
+    return;
+  }
+  view('panel');
+  await loadStock();
+  refreshCount();
+}
+
+$('go').onclick = async () => {
+  say('lm', '', true);
+  const { error } = await sb.auth.signInWithPassword({ email: $('em').value.trim(), password: $('pw').value });
+  if (error) { say('lm', 'อีเมลหรือรหัสผ่านไม่ถูกต้อง', false); return; }
+  $('pw').value = '';
+  enter();
+};
+
+$('out').onclick = async () => { await sb.auth.signOut(); $('ids').value = ''; resetProdForm(); view('login'); };
+$('ids').oninput = () => { say('am', '', true); refreshCount(); };
+
+$('add').onclick = async () => {
+  const { unique } = parse();
+  if (!unique.length || unique.length > MAX) return;
+  const name = $('prod').selectedOptions[0].textContent;
+  if (!confirm('เพิ่ม ' + unique.length + ' ไอดี เข้าสินค้า "' + name + '" ใช่ไหม')) return;
+  $('add').disabled = true;
+  say('am', 'กำลังเพิ่มสต็อก...', true);
+  const { data, error } = await sb.rpc('admin_add_accounts', { p_product_id: Number($('prod').value), p_items: unique });
+  if (error) {
+    const key = Object.keys(ERR).find(k => (error.message || '').includes(k));
+    say('am', key ? ERR[key] : 'เพิ่มสต็อกไม่สำเร็จ ลองใหม่อีกครั้ง', false);
+    refreshCount();
+    return;
+  }
+  const r = Array.isArray(data) ? data[0] : data;
+  $('ids').value = '';
+  say('am', 'เพิ่มสำเร็จ ' + r.added + ' ไอดี' + (r.skipped ? ' (ข้ามไอดีซ้ำ ' + r.skipped + ')' : ''), true);
+  refreshCount();
+  loadStock();
+};
+
+const TERR = {
+  not_admin: 'บัญชีนี้ไม่มีสิทธิ์แอดมิน',
+  user_not_found: 'ไม่พบสมาชิกอีเมลนี้ ให้ลูกค้าสมัครสมาชิกที่หน้าร้านก่อน',
+  duplicate_ref: 'เลขอ้างอิงนี้เคยเติมไปแล้ว ห้ามเติมซ้ำ',
+  bad_amount: 'ยอดต้องเป็นตัวเลข 1 ถึง 100000',
+  bad_ref: 'ใส่เลขอ้างอิงสลิปหรือรหัสซอง'
+};
+$('tu').onclick = async () => {
+  const email = $('tem').value.trim(), ref = $('tref').value.trim(), amt = parseInt($('tam').value, 10);
+  if (!email || !ref || !(amt > 0)) { say('tm', 'กรอกอีเมล เลขอ้างอิง และยอดเงินให้ครบ', false); return; }
+  if (!confirm('เติม ' + amt + ' เครดิต ให้ ' + email + ' ใช่ไหม')) return;
+  $('tu').disabled = true;
+  say('tm', 'กำลังเติมเครดิต...', true);
+  const { data, error } = await sb.rpc('admin_topup', { p_email: email, p_method: $('tmt').value, p_ref: ref, p_amount: amt });
+  $('tu').disabled = false;
+  if (error) {
+    const key = Object.keys(TERR).find(k => (error.message || '').includes(k));
+    say('tm', key ? TERR[key] : 'เติมเครดิตไม่สำเร็จ ลองใหม่อีกครั้ง', false);
+    return;
+  }
+  say('tm', 'เติมสำเร็จ ยอดเครดิตของลูกค้าตอนนี้ ' + data + ' เครดิต', true);
+  $('tref').value = ''; $('tam').value = '';
+};
+
+enter();
+</script>
+</body>
+</html>
